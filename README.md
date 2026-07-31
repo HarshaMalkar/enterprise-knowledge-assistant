@@ -42,46 +42,81 @@ An AI-powered Enterprise Knowledge Assistant built using **LangGraph**, **LangCh
 # Project Architecture
 
 ```text
-                    +----------------------+
-                    |      User            |
-                    +----------+-----------+
-                               |
-                               v
-                    +----------------------+
-                    |   Streamlit UI       |
-                    +----------+-----------+
-                               |
-                               v
-                    +----------------------+
-                    |      FastAPI         |
-                    +----------+-----------+
-                               |
-                               v
-                    +----------------------+
-                    | LangGraph Workflow   |
-                    +----------+-----------+
-                               |
-       ---------------------------------------------------------
-       |              |              |              |            |
-       v              v              v              v            v
+                   +------------------------------------------------------+
+|                      End User                        |
++-------------------------+----------------------------+
+                          |
+                          v
++------------------------------------------------------+
+|                 Streamlit Dashboard                  |
+|  - Chat Interface                                    |
+|  - Source Viewer                                     |
+|  - Query History                                     |
+|  - Feedback (👍 / 👎)                                |
++-------------------------+----------------------------+
+                          |
+                          v
++------------------------------------------------------+
+|                     FastAPI Layer                    |
+|  - Authentication                                    |
+|  - Request Validation                                |
+|  - Rate Limiting                                     |
++-------------------------+----------------------------+
+                          |
+                          v
++------------------------------------------------------+
+|               LangGraph Orchestrator                 |
++-------------------------+----------------------------+
+                          |
+         -------------------------------------------------------
+         |            |            |            |              |
+         v            v            v            v              v
 
- +-------------+ +-------------+ +-------------+ +-------------+ +-------------+
- | Planner     | | Retriever   | | Reasoning   | | Citation    | | Logger      |
- | Agent       | | Agent       | | Agent       | | Agent       | | Agent       |
- +------+------+ +------+------+ +------+------+ +------+------+ +------+------+
-        |               |               |               |               |
-        |               |               |               |               |
-        |               v               |               |               |
-        |      +--------------------+   |               |               |
-        |      |    ChromaDB        |   |               |               |
-        |      | Vector Database    |   |               |               |
-        |      +---------+----------+   |               |               |
-        |                |              |               |               |
-        |                |              |               |               |
-        |        Document Embeddings    |               |               |
-        |                               |               |               |
-        +-------------------------------+---------------+---------------+
-                                        |
+ +---------------+ +-------------+ +------------+ +-----------+ +-------------+
+ | Query         | | Retriever   | | Reasoning  | | Citation  | | Response    |
+ | Analyzer      | | Agent       | | Agent      | | Agent     | | Formatter   |
+ +-------+-------+ +------+------+ +------+-----+ +-----+-----+ +------+------+
+         |                |                |             |              |
+         |                v                |             |              |
+         |      +--------------------+     |             |              |
+         |      |  ChromaDB / FAISS  |     |             |              |
+         |      | Vector Database    |     |             |              |
+         |      +---------+----------+     |             |              |
+         |                |                |             |              |
+         |                v                |             |              |
+         |      +--------------------+     |             |              |
+         |      | Enterprise Docs    |     |             |              |
+         |      | PDF / DOCX / KB    |     |             |              |
+         |      +--------------------+     |             |              |
+         |                                |             |              |
+         --------------------------------------------------------------
+                                          |
+                                          v
+
+                         +--------------------------------+
+                         |      LLM (Azure OpenAI)        |
+                         |    GPT-4o / GPT-5 / Claude     |
+                         +---------------+----------------+
+                                         |
+                                         v
+
+                         +--------------------------------+
+                         |    Conversation Memory         |
+                         |    Session Context Store       |
+                         +---------------+----------------+
+                                         |
+                                         v
+
+                         +--------------------------------+
+                         |     Audit & Monitoring         |
+                         |     Logs / Metrics / Cost      |
+                         +---------------+----------------+
+                                         |
+                                         v
+
+                         +--------------------------------+
+                         | Final Answer + Citations       |
+                         +--------------------------------+
                                         v
                               Final Response with Citations
 ```
@@ -170,28 +205,46 @@ enterprise-knowledge-assistant/
 User Question
       │
       ▼
+Query Analyzer Agent
+(Intent Detection,
+Keyword Extraction)
+      │
+      ▼
 Planner Agent
+(Task Planning &
+Routing Decision)
       │
       ▼
 Retriever Agent
       │
       ▼
-ChromaDB
+ChromaDB Vector Store
       │
       ▼
-Relevant Context
+Relevant Documents
+      │
+      ▼
+Context Validator Agent
+(Relevance Filtering)
       │
       ▼
 Reasoning Agent
+(LLM Processing)
+      │
+      ▼
+Response Formatter Agent
+(Formatting & Cleanup)
       │
       ▼
 Citation Agent
+(Source Attribution)
       │
       ▼
-Logger Agent
+Audit / Logger Agent
+(Query Tracking)
       │
       ▼
-Response
+Final Response
 ```
 
 ---
